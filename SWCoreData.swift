@@ -25,15 +25,22 @@ func ZAssert(test: Bool, message: String) {
 }
 
 class SWCoreData: NSObject {
-	var managedObjectContext: NSManagedObjectContext = {
-		let modelURL = NSBundle.mainBundle().URLForResource("SwiftTestOne", withExtension: "momd")
+    var identifier: String = "SwiftTestOne"
+    
+    var _managedObjectContext: NSManagedObjectContext? = nil;
+	var managedObjectContext: NSManagedObjectContext {
+        if (_managedObjectContext != nil) {
+            return(_managedObjectContext!);
+        }
+    
+		let modelURL = NSBundle.mainBundle().URLForResource(identifier, withExtension: "momd")
 		let mom = NSManagedObjectModel(contentsOfURL: modelURL)
 		ZAssert(mom != nil, "Error initializing mom from: \(modelURL)")
 
 		let psc = NSPersistentStoreCoordinator(managedObjectModel: mom)
 
 		let urls = NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)
-		let storeURL = (urls[urls.endIndex-1]).URLByAppendingPathComponent("SwiftTestOne.sqlite")
+        let storeURL = (urls[urls.endIndex-1]).URLByAppendingPathComponent(NSString(format:"%@.sqlite", identifier))
 
 		var error: NSError? = nil
 
@@ -43,11 +50,11 @@ class SWCoreData: NSObject {
 		}
 		ZAssert(store != nil, "Unresolved error \(error?.localizedDescription), \(error?.userInfo)\nAttempted to create store at \(storeURL)")
 
-		var managedObjectContext = NSManagedObjectContext()
-		managedObjectContext.persistentStoreCoordinator = psc
+		_managedObjectContext = NSManagedObjectContext()
+		_managedObjectContext!.persistentStoreCoordinator = psc
 
-		return managedObjectContext
-	}()
+        return(_managedObjectContext!);
+	}
     
     func saveContext () {
         var error: NSError? = nil
